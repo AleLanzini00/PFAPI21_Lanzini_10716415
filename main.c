@@ -1,6 +1,4 @@
 /*NOTE
- * CLASSIFCA NON FUNZIONA: -verificare che venga gestita correttamente
- *                         -algortimo funziona con test prova (grafi semplici 3x3)
  *passare ad algoritmo la matrice con PUNTATORE
  *Testare con valori prova che la classifca funzioni correttamente
 */
@@ -61,12 +59,12 @@ int algoritmo(int dim,int mat[dim][dim]){
                 visita(c,dim,mat, vettdist);
             }
         }
-    }/*
+    }
     for(n=0;n<dim;n++){
         //prova di stampa
-        printf("\nDistanza nodo %d: %d",n,vettdist[n]);
+        //printf("\nDistanza nodo %d: %d",n,vettdist[n]);
         disttot=disttot+vettdist[n];
-    }*/
+    }
     return disttot;
 }
 
