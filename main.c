@@ -1,4 +1,7 @@
 /*NOTE
+ * TROPPO LENTO
+ * TEST 4 BLOCCATO
+ * NON PUO LEGGERE 2 TOPK CONSECUTIVI
  *passare ad algoritmo la matrice con PUNTATORE
  *Testare con valori prova che la classifca funzioni correttamente
 */
@@ -85,21 +88,21 @@ int main() {
     int d,k,c,i,posiz,dist;
     int maxdist=0;
     int id=0;   //usato per contare i grafi inseriti, e quindi ne restituisce l'id
-
+    int in=0;
     //printf("Inserire d e k:\n");
-    scanf("%d %d",&d,&k);   //leggo d e k
+    in=scanf("%d %d",&d,&k);   //leggo d e k
     int maxdim=(d*10)+(d-1); //2^32=4.294.967.295, quindi 10 cifre per arco, più d-1 virgole
     char s[maxdim];
     struct Grafo classifica[k]; //la classifica è un vettore di struct
     int matrice[d][d];  //matrice per salvare input
-
     //leggo un comando
     //printf("Inserire un comando (Aggiungigrafo o TopK):\n");
-    scanf("%s",s);
-    while(s[0]=='A'){   //AggiungiGrafo
+    in=scanf("%s",s);
+    while(s[0]=='A' || s[0]=='T'){
+        if(s[0]=='A'){//AggiungiGrafo
         //leggo la matrice  per righe
         for(c=0;c<d;c++){
-            scanf("%s",s);
+            in=scanf("%s",s);
             posiz=0;    //posiz tiene conto della posizone del carattere nella stringa
             for(i=0;i<d;i++){
                 matrice[c][i]=atoi(&s[posiz]);
@@ -124,6 +127,7 @@ int main() {
             if(id==k-1){
                 maxdist=trovamassimo(classifica,k); //calcolo il massimo solo una volta riempito il vettore, prima inserisco sempre
             }
+
         }
         else{
             if(dist<classifica[maxdist].distanza){
@@ -132,15 +136,22 @@ int main() {
                 classifica[maxdist].distanza=dist;
                 maxdist=trovamassimo(classifica,k); //ricalcolo il peggiore
             }
+            }
+            //nuovo input
+            id++;
+            in=scanf("%s",s);
         }
-        //leggo nuovo comando
-        id++;
-        scanf("%s",s);
-    }
-    if(s[0]=='T'){
-        //STAMPA LA CLASSIFICA
-        for(i=0;i<k;i++){
-            printf("%d ",classifica[i].ID);
+        if(s[0]=='T'){  //TOPK
+            //STAMPA LA CLASSIFICA
+            for(i=0;i<id;i++){
+                printf("%d ",classifica[i].ID);
+            }
+            printf("\n");
+            in=scanf("%s",s);
+            if(s[0]=='T'){
+                break;      //NON PUO LEGGERE DUE TOPK CONSECUTIVI
+            }
         }
     }
+    if(in==7){} //per eliminare warning su scanf
 }
