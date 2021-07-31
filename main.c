@@ -1,5 +1,5 @@
 /*NOTE
- * non funziona (CODICE DA RIVEDERE)
+ * rivedere infinito
  * rivedere se trovapos è necessario (consuma tempo)
  * PASSARE MATRICE CON PUNT
 */
@@ -28,8 +28,10 @@ int trovapos(struct nodo *A, int dim,int nomenodo){     //ricerca per nome del n
     return posizione;
 }
 
-//gestione di un MIN_HEAP
+//GESTIONE MIN_HEAP
+
 int heapsize;
+
 void min_heapify(struct nodo * A, int posiz){
     int min;
     int l=posiz*2+1;
@@ -50,20 +52,14 @@ void min_heapify(struct nodo * A, int posiz){
         *(A+min)=swap;
     }
 }
-/*
-  void build_min_heap(struct nodo* A, int length){
-    int i;
-    *(A->heapsizep)=length;
-    for(i=length/2;i--;i=0){
-        min_heapify(A,i);
-    }
-}
-*/
+
 void heap_decrease_key(struct nodo* A,int posiz,struct nodo* node){
     if(node->dist > (A+posiz)->dist){
         printf("\nERRORE NUOVA CHIAVE PIU GRANDE DELLA VECCHIA");
     }
+
     *(A+posiz)=*node;
+
     while(posiz>0 && (A+((posiz-1)/2))->dist > (A+posiz)->dist){
         //scambia A[i] con A[padrei]
         struct nodo swap;
@@ -76,14 +72,18 @@ void heap_decrease_key(struct nodo* A,int posiz,struct nodo* node){
 }
 
 void min_heap_insert(struct nodo *A,struct nodo* node){   //aggiunta di un nodo al minheap
-    *(A->heapsizep)=*(A->heapsizep)+1;
-    ((A+*(A->heapsizep))->dist)=infinito;   //A[A.heapsize]=infinito
+    *(A->heapsizep) = *(A->heapsizep) + 1;
+    //printf("\nProva: valore heapsize in min_heap_insert: %d",*(A->heapsizep));
+    ((A + *(A->heapsizep))->dist) = infinito;   //A[A.heapsize] = infinito
+    ((A + *(A->heapsizep))->nome) = -1;
+    ((A + *(A->heapsizep))->prev) = -1;
+    //printf("\nHeapsize fine insert: %d",heapsize);
     heap_decrease_key(A,*(A->heapsizep),node);
 }
 
-struct nodo heap_extract_min(struct nodo *A){   //DA FARE
+struct nodo heap_extract_min(struct nodo *A){
     struct nodo min;
-    if(*(A->heapsizep)>0){
+    if(*(A->heapsizep)<0){
         printf("\nErrore underflow");
     }
     min=*A; //min=A[0];
@@ -93,15 +93,15 @@ struct nodo heap_extract_min(struct nodo *A){   //DA FARE
     return min;
 }
 
-void dijkstra(int dim, int mat[dim][dim], struct nodo *A, struct nodo *G){  //DA FARE
+void dijkstra(int dim, int mat[dim][dim], struct nodo *A, struct nodo *G){
     //A: min heap  G:rappresentazione del grafo
     int i;
     int riga;
     struct nodo u;
-    *(A->heapsizep)=0;   //Q=0
+    *(A->heapsizep)=0;   //inizializzo Q=0
     G->dist=0;
-    G->prev=-1;
-    min_heap_insert(A,G); //passo la struttura dati e il nodo zero
+    G->prev=-1;     //S.PREV = NIL
+    min_heap_insert(A,G); //inserisco nodo 0 nel MIN_HEAP
     for(i=1;i<dim;i++){
         (G+i)->dist=infinito;
         (G+i)->prev=-1;     //inserisco tutti i nodi nello heap
@@ -132,22 +132,43 @@ int main(){
     int i,c;
     for(i=0;i<d;i++){
         for(c=0;c<d;c++) {
-            scanf("\n%d", &matrice[i][c]);
+            scanf("%d", &matrice[i][c]);
         }
+    }
+    //stampo matrice
+    for(i=0;i<d;i++){
+        for(c=0;c<d;c++) {
+            printf("%d ",matrice[i][c]);
+        }
+        printf("\n");
     }
     //init min_heap
     for(i=0;i<d;i++){
-        Q[i].heapsizep=&heapsize;   //in ogni nodo tengo un puntatore alla varaibile heapsize
+        Q[i].heapsizep = &heapsize;   //in ogni nodo tengo un puntatore alla varaibile heapsize
         grafo[i].nome=i;
         grafo[i].dist=-1;
         grafo[i].prev=-1;
+        grafo[i].heapsizep=&heapsize;
     }
+    //uso l'algoritmo di Dijkstra
     dijkstra(d,matrice,Q,grafo);
     //stampa di prova
     int tot=0;
     for(i=0;i<d;i++){
+        if(grafo[i].dist==infinito){
+            grafo[i].dist=0;    //gestisce nodi non collegati
+        }
         printf("\nDistanza nodo %d: %d",i,grafo[i].dist);
         tot=tot+grafo[i].dist;
     }
     printf("\nDISTANZA TOT: %d",tot);
 }
+/*
+  void build_min_heap(struct nodo* A, int length){
+    int i;
+    *(A->heapsizep)=length;
+    for(i=length/2;i--;i=0){
+        min_heapify(A,i);
+    }
+}
+*/
