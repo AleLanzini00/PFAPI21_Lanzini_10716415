@@ -1,10 +1,10 @@
 /*NOTE
- * rivedere infinito
- * rivedere se trovapos è necessario (consuma tempo)
- * PASSARE MATRICE CON PUNT
-*/
+ * Algortimo da solo funzionava su grAafi piccoli
+ * ancora da testare su grandi grafi e più grafi
+ * nessun test di input fatto (possibili errori di passaggio dati/lettura) CONTROLLARE
+ */
 #include <stdio.h>
-#include <stdlib.h>
+#include<stdlib.h>
 #define infinito 4000000
 
 struct nodo{
@@ -13,6 +13,38 @@ struct nodo{
     int prev;
     int* heapsizep;
 };
+
+struct Grafo{
+    int ID;
+    int distanza;
+};
+
+//FUNZIONI UTILI
+int numcifre(int n){
+    int cifre=1;
+    int potenza=1;
+    while(1) {
+        if (n/potenza < 10)
+            return cifre;
+        else{
+            cifre++;
+            potenza=potenza*10;
+        }
+    }
+}
+
+int trovamassimo(struct Grafo vet[],int dim){   //restituisce la posizione del massimo
+    int maxp=0;
+    int maxd=-1;
+    int i;
+    for(i=0;i<dim;i++){
+        if(vet[i].distanza>maxd){
+            maxp=i;
+            maxd=vet[i].distanza;
+        }
+    }
+    return maxp;
+}
 
 int trovapos(struct nodo *A, int dim,int nomenodo){     //ricerca per nome del nodo e ne restituisce la posizione
     int i=0;
@@ -29,7 +61,6 @@ int trovapos(struct nodo *A, int dim,int nomenodo){     //ricerca per nome del n
 }
 
 //GESTIONE MIN_HEAP
-
 int heapsize;
 
 void min_heapify(struct nodo * A, int posiz){
@@ -124,51 +155,100 @@ void dijkstra(int dim, int mat[dim][dim], struct nodo *A, struct nodo *G){
     }
 }
 
-int main(){
-    int d=3;
+
+int main() {
+    int d,k,c,i,posiz;
+    int tot;    //contiene la distanza del grafo (matrice)
+    int maxdist=0;
+    int id=0;   //usato per contare i grafi inseriti, e quindi ne restituisce l'id
+    int in=0;   //per rimuovere warning scanf
+    //printf("Inserire d e k:\n");
+    in=scanf("%d %d",&d,&k);   //leggo d e k
+    int maxdim=(d*10)+(d-1); //2^32=4.294.967.295, quindi 10 cifre per arco, più d-1 virgole
+    char s[maxdim];
+    struct Grafo classifica[k]; //la classifica è un vettore di struct
+    int matrice[d][d];  //matrice per salvare input
     struct nodo Q[d]; //min heap che conterrà i nodi, uso un vettore di struct
-    struct nodo grafo[d];
-    int matrice[d][d];
-    int i,c;
-    for(i=0;i<d;i++){
-        for(c=0;c<d;c++) {
-            scanf("%d", &matrice[i][c]);
+    struct nodo grafo[d];   //contengo i nodi
+
+    //leggo un comando
+    //printf("Inserire un comando (Aggiungigrafo o TopK):\n");
+    in=scanf("%s",s);
+    while(s[0]=='A' || s[0]=='T'){
+        if(s[0]=='A'){//AggiungiGrafo
+            //leggo la matrice  per righe
+            for(c=0;c<d;c++){
+                in=scanf("%s",s);
+                posiz=0;    //posiz tiene conto della posizone del carattere nella stringa
+                for(i=0;i<d;i++){
+                    matrice[c][i]=atoi(&s[posiz]);
+                    posiz=posiz+numcifre(matrice[c][i])+1;
+                }
+            }
+            //stampo la matrice per verifica
+            /*int riga=0;
+            int col=0;
+             printf("Stampa di controllo\n");
+            for(riga=0;riga<d;riga++){
+                for(col=0;col<d;col++){
+                    printf("\t%d",matrice[riga][col]);
+                }
+                printf("\n");
+            }*/
+            //CALCOLO DIST E GESTISCO TOPK
+            //init min_heap
+            for(i=0;i<d;i++){
+                Q[i].heapsizep = &heapsize;   //in ogni nodo tengo un puntatore alla varaibile heapsize
+                grafo[i].nome=i;
+                grafo[i].dist=-1;
+                grafo[i].prev=-1;
+                grafo[i].heapsizep=&heapsize;
+            }
+            //uso l'algoritmo di Dijkstra
+            dijkstra(d,matrice,Q,grafo);
+            //stampa di prova
+            tot=0;
+            for(i=0;i<d;i++){
+                if(grafo[i].dist==infinito){
+                    grafo[i].dist=0;    //gestisce nodi non collegati
+                }
+                printf("\nDistanza nodo %d: %d",i,grafo[i].dist);
+                tot=tot+grafo[i].dist;
+            }
+            printf("\nDISTANZA TOT: %d",tot);
+            if(id<k){   //inizializzo la classifica con i primi K grafi
+                classifica[id].ID=id;
+                classifica[id].distanza=tot;
+                if(id==k-1){
+                    maxdist=trovamassimo(classifica,k); //calcolo il massimo solo una volta riempito il vettore, prima inserisco sempre
+                }
+
+            }
+            else{
+                if(tot<classifica[maxdist].distanza){
+                    //sostituisco il maxid
+                    classifica[maxdist].ID=id;
+                    classifica[maxdist].distanza=tot;
+                    maxdist=trovamassimo(classifica,k); //ricalcolo il peggiore
+                }
+            }
+            //nuovo input
+            id++;
+            in=scanf("%s",s);
+        }
+        if(s[0]=='T'){  //TOPK
+            //STAMPA LA CLASSIFICA
+            for(i=0;i<id;i++){
+                printf("%d ",classifica[i].ID);
+            }
+            printf("\n");
+            in=scanf("%s",s);
+            if(s[0]=='T'){
+                break;      //NON PUO LEGGERE DUE TOPK CONSECUTIVI
+            }
         }
     }
-    //stampo matrice
-    for(i=0;i<d;i++){
-        for(c=0;c<d;c++) {
-            printf("%d ",matrice[i][c]);
-        }
-        printf("\n");
-    }
-    //init min_heap
-    for(i=0;i<d;i++){
-        Q[i].heapsizep = &heapsize;   //in ogni nodo tengo un puntatore alla varaibile heapsize
-        grafo[i].nome=i;
-        grafo[i].dist=-1;
-        grafo[i].prev=-1;
-        grafo[i].heapsizep=&heapsize;
-    }
-    //uso l'algoritmo di Dijkstra
-    dijkstra(d,matrice,Q,grafo);
-    //stampa di prova
-    int tot=0;
-    for(i=0;i<d;i++){
-        if(grafo[i].dist==infinito){
-            grafo[i].dist=0;    //gestisce nodi non collegati
-        }
-        printf("\nDistanza nodo %d: %d",i,grafo[i].dist);
-        tot=tot+grafo[i].dist;
-    }
-    printf("\nDISTANZA TOT: %d",tot);
+    if(in==7){
+
+    } //per eliminare warning su scanf
 }
-/*
-  void build_min_heap(struct nodo* A, int length){
-    int i;
-    *(A->heapsizep)=length;
-    for(i=length/2;i--;i=0){
-        min_heapify(A,i);
-    }
-}
-*/
