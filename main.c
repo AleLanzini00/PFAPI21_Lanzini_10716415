@@ -197,7 +197,7 @@ int main() {
                 }
             }
             //STAMPO LA MATRICE PER VERIFICA
-            /*
+/*
             int riga=0;
             int col=0;
             printf("Stampa di controllo\n");
@@ -207,7 +207,8 @@ int main() {
                 }
                 printf("\n");
             }
-             */
+            */
+
 
             //init min_heap e grafo:
             for (i = 0; i < d; i++) {
@@ -252,14 +253,21 @@ int main() {
         }
         if(s[0]=='T'){
             //stampa la classifica
-            for(i=0;i<id;i++){
-                printf("%d ",classifica[i].ID);
+            if(id<k){
+                for(i=0;i<id;i++){
+                    printf("%d ",classifica[i].ID);
+                }
+            }
+            else {
+                for (i = 0; i < k; i++) {
+                    printf("%d ", classifica[i].ID);
+                }
             }
             printf("\n");
-        }
-        in=scanf("%s",s);
-        if(s[0]=='T'){
-            break;      //NON PUO LEGGERE DUE TOPK CONSECUTIVI
+            in=scanf("%s",s);
+            if(s[0]=='T'){
+                break;      //NON PUO LEGGERE DUE TOPK CONSECUTIVI
+            }
         }
     }
     if(in==7){} //per eliminare warning su scanf
