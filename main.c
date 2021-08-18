@@ -1,14 +1,15 @@
 /*NOTE
- * non puo leggere 2 topk consecutivi
+ * NON PASSA OPEN TEST 2-3-6, PRESUMO PER ERRORI DI STAMPA? IL RIS SEMBRA IDENTICO
+ * percorso: /mnt/c/users/alessio/desktop/Api_project/PFapi/cmake-build-debug$
  * prev è imutile?
- *  FORSE MEGLIO INIT Q IN DJIKSTRA E NON IN MAIN
- * rivedere infinito
- * rivedere se trovapos è necessario (consuma tempo)
- * PASSARE MATRICE CON PUNT
+ *  FORSE MEGLIO INIT Q IN DJIKSTRA E NON IN MAIN ->creava probelmi
+ * rivedere infinito -> se messo a numero grande crea probelmi e sbaglia il risultato
+ *          Valutare passaggio a unisgned int
+ * rivedere se trovapos è necessario (consuma tempo) -> meglio di teta(n) non si puo fare
 */
 #include <stdio.h>
 #include <stdlib.h>
-#define infinito 4000000
+#define infinito 999999
 int heapsize;
 
 struct nodo{
@@ -130,13 +131,13 @@ struct nodo heap_extract_min(struct nodo *A){
     return minimo;
 }
 
-void dijkstra(int dim, int mat[dim][dim], struct nodo *A, struct nodo *G){
+void dijkstra(int dim, int *matp[dim], struct nodo *A, struct nodo *G){
     //A: min heap , G:rappresentazione del grafo
     int i;
     int riga;
     struct nodo u;
     heapsize=-1;   //inizializzo Q=0
-                    // -1 perchè il vet inizia da zero, così le posizioni coincidono
+    // -1 perchè il vet inizia da zero, così le posizioni coincidono
     //gestisco nodo 0
     G->dist=0;
     G->prev=-1;     //S.PREV = NIL
@@ -153,10 +154,10 @@ void dijkstra(int dim, int mat[dim][dim], struct nodo *A, struct nodo *G){
         riga = u.nome;  //per l'n-esimo nodo trovo gli adiacenti nell'n-esima riga
         int pos;
         for(i=0;i<dim;i++){
-            if(i!=riga && mat[riga][i]!=0){     //scorro gli adiacenti a U
-                                                //G+i = i-esimo nodo, cioè nodo v
-                if((G+i)->dist > u.dist + mat[riga][i]){
-                    (G+i)->dist = u.dist + mat[riga][i];
+            if(i!=riga && *(matp[riga]+i)!=0){     //scorro gli adiacenti a U
+                //G+i = i-esimo nodo, cioè nodo v
+                if((G+i)->dist > u.dist + *(matp[riga]+i)){
+                    (G+i)->dist = u.dist + *(matp[riga]+i);
                     (G+i)->prev = u.nome;
                     pos = trovapos(A,dim,(G+i)->nome);    //potrebbe essere migliorabile
                     heap_decrease_key(A,pos,(G+i));
@@ -174,6 +175,7 @@ int main() {
     struct nodo Q[d];       //min heap che conterrà i nodi, uso un vettore di struct
     struct nodo grafo[d];   //rappresenta il grafo inserito
     int matrice[d][d];      //matrice per salvare l'input
+    int* matpointer[d];
 
     int maxdim = (d*10)+(d-1); //2^32=4.294.967.295, quindi 10 cifre per arco, più d-1 virgole
     char s[maxdim];
@@ -184,7 +186,7 @@ int main() {
 
     //leggo un comando Topk o AggiungiGrafo
     in=scanf("%s",s);
-    while(s[0]=='A' || s[0]=='T'){
+    while(in!=EOF){
         if(s[0]=='A') {     //AggiungiGrafo
 
             //leggo la matrice per righe
@@ -195,6 +197,7 @@ int main() {
                     matrice[c][i]=atoi(&s[posiz]);
                     posiz=posiz+numcifre(matrice[c][i])+1;
                 }
+                matpointer[c] = &matrice[c][0];   //inizializzo punt a matrice per ogni riga
             }
             //STAMPO LA MATRICE PER VERIFICA
 /*
@@ -219,7 +222,7 @@ int main() {
                 //grafo[i].heapsizep = &heapsize;
             }
             //uso l'algoritmo di Dijkstra
-            dijkstra(d, matrice, Q, grafo);
+            dijkstra(d, matpointer, Q, grafo);
             //stampa di prova
             tot = 0;  //somma delle distanze
             for (i = 0; i < d; i++) {
@@ -260,15 +263,16 @@ int main() {
             }
             else {
                 for (i = 0; i < k; i++) {
-                    printf("%d ", classifica[i].ID);
+                    if(i==k){
+                        printf("%d", classifica[i].ID);
+                    }
+                    else {
+                        printf("%d ", classifica[i].ID);
+                    }
                 }
             }
             printf("\n");
             in=scanf("%s",s);
-            if(s[0]=='T'){
-                break;      //NON PUO LEGGERE DUE TOPK CONSECUTIVI
-            }
         }
     }
-    if(in==7){} //per eliminare warning su scanf
 }
