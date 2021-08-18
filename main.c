@@ -1,6 +1,6 @@
 /*NOTE
- * NON PASSA OPEN TEST 2-3-6, PRESUMO PER ERRORI DI STAMPA? IL RIS SEMBRA IDENTICO
- * percorso: /mnt/c/users/alessio/desktop/Api_project/PFapi/cmake-build-debug$
+ * TUTTI I TEST OPEN PASSATI
+ * percorso: /mnt/c/users/alessio/desktop/Api_project/PFapi/cmake-build-debug
  * prev è imutile?
  *  FORSE MEGLIO INIT Q IN DJIKSTRA E NON IN MAIN ->creava probelmi
  * rivedere infinito -> se messo a numero grande crea probelmi e sbaglia il risultato
@@ -258,16 +258,21 @@ int main() {
             //stampa la classifica
             if(id<k){
                 for(i=0;i<id;i++){
-                    printf("%d ",classifica[i].ID);
+                    if(i!=id-1) {
+                        printf("%d ", classifica[i].ID);
+                    }
+                    else{
+                        printf("%d", classifica[i].ID);
+                    }
                 }
             }
             else {
                 for (i = 0; i < k; i++) {
-                    if(i==k){
-                        printf("%d", classifica[i].ID);
+                    if(i!=k-1){
+                        printf("%d ", classifica[i].ID);
                     }
                     else {
-                        printf("%d ", classifica[i].ID);
+                        printf("%d", classifica[i].ID);
                     }
                 }
             }
