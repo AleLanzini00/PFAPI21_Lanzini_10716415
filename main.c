@@ -6,6 +6,10 @@
  * rivedere infinito -> se messo a numero grande crea probelmi e sbaglia il risultato
  *          Valutare passaggio a unisgned int
  * rivedere se trovapos è necessario (consuma tempo) -> meglio di teta(n) non si puo fare
+ * IDEE
+ *      -classifica come max_heap per avere subito il massimo
+ *      -numcifre? ->rivedere lettura input!
+ *      -trovapos evitato. forse è un po ridondante passare il puntatore a grafo ogni volta, ma non dovrebbe occupare molto
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,6 +20,7 @@ struct nodo{
     int nome;
     int dist;
     int prev;
+    int posmheap;
     //int* heapsizep;
 };
 
@@ -24,8 +29,8 @@ struct Grafo{       //struct usata per la classifica
     int distanza;
 };
 
-int numcifre(int n){
-    int cifre=1;
+int numcifre(int n){        //conta le cifre lette
+    int cifre=1;            //vine fatto "circa 6 volte" per ogni valore -> PESANTE 6*d*d
     int potenza=1;
     while(1) {
         if (n/potenza < 10)
@@ -50,25 +55,10 @@ int trovamassimo(struct Grafo vet[],int dim){   //restituisce la posizione del m
     return maxp;
 }
 
-int trovapos(struct nodo *A, int dim,int nomenodo){     //ricerca per nome del nodo e ne restituisce la posizione
-    int i=0;
-    int posizione=0;
-    while(i<dim){
-        if((A+i)->nome == nomenodo){
-            posizione = i;
-            i = dim+1;    //termino il ciclo
-        }
-        else
-            i++;
-    }
-    return posizione;
-}
-
 //GESTIONE MIN_HEAP
 
-
-void min_heapify(struct nodo *A, int posiz){
-    int min;
+void min_heapify(struct nodo *A,struct nodo *G ,int posiz){
+    int min;    //posizione del minimo
     int l = (posiz*2)+1;
     int r = (posiz*2)+2; //figli sx e dx
     if(l <= heapsize && (((A+l)->dist) < (A+posiz)->dist)){
@@ -80,16 +70,20 @@ void min_heapify(struct nodo *A, int posiz){
     if(r <= heapsize && (A+r)->dist<(A+min)->dist) {
         min = r;
     }
-    if(min!=posiz){
+    if(min!=posiz){     //scambio posiz con min
         struct nodo swap;
+        //prima aggirono le poszioni, poi faccio lo scambio
+        (G+(A+posiz)->nome)->posmheap = min; //aggiorno posizione scambiati
+        (G+(A+min)->nome)->posmheap = posiz; //aggiorno posizione scambiati
+        //scambio effettivo
         swap=*(A+posiz);
         *(A+posiz)=*(A+min);
         *(A+min)=swap;
-        min_heapify(A,min);
+        min_heapify(A,G,min);
     }
 }
 
-void heap_decrease_key(struct nodo* A,int posiz,struct nodo* node){
+void heap_decrease_key(struct nodo* A,int posiz,struct nodo* node,struct nodo* G){
     //passo il nodo anziche solo la chiave
     if((node->dist) > ((A+posiz)->dist)){
         printf("\nERRORE NUOVA CHIAVE PIU GRANDE DELLA VECCHIA");
@@ -98,36 +92,47 @@ void heap_decrease_key(struct nodo* A,int posiz,struct nodo* node){
     (A+posiz)->nome = node->nome;
     (A+posiz)->dist = node->dist;
     (A+posiz)->prev = node->prev;
+    node->posmheap = posiz;
     //non c'è bisogno di aggiornare lo heapsize
 
     while(posiz>0 && ((A+((posiz-1)/2))->dist) > ((A+posiz)->dist)){
         //scambia A[i] con A[padrei]
+
+        node->posmheap = (posiz-1)/2;   //aggiorno la posizione nel minheap del nodo
+        (G+((A+((posiz-1)/2))->nome))->posmheap = posiz;   //aggriono posiz vecchio padre
+
         struct nodo swap;
         swap=*(A+posiz);
         *(A+posiz) = *(A+((posiz-1)/2));
         *(A+((posiz-1)/2)) = swap;
-        //i=parenti(i)
+        //i=parent(i)
         posiz=((posiz-1)/2);
     }
 }
 
-void min_heap_insert(struct nodo *A,struct nodo* node){   //aggiunta di un nodo al minheap
+void min_heap_insert(struct nodo *A,struct nodo* node,struct nodo *G){   //aggiunta di un nodo al minheap
     heapsize = heapsize + 1;
     ((A + heapsize)->dist) = infinito;   //A[A.heapsize] = infinito
     ((A + heapsize)->nome) = -1;
     ((A + heapsize)->prev) = -1;
-    heap_decrease_key(A, heapsize, node);
+    node->posmheap = heapsize;
+    heap_decrease_key(A, heapsize, node,G);
 }
 
-struct nodo heap_extract_min(struct nodo *A){
+struct nodo heap_extract_min(struct nodo *A, struct nodo *G){
     struct nodo minimo;
     if(heapsize < 0){
         printf("\nErrore underflow");
     }
     minimo = *A; //min=A[0];
+    //poszione nulla all'elemento eliminato
+    (G+(A->nome))->posmheap =-1;
     *A = *(A + heapsize);     //A[0]=[A.heapsize]
+    //aggiorno poszione del nodo messo in testa
+    (G+(A+heapsize)->nome)->posmheap=0;
     heapsize = heapsize - 1;
-    min_heapify(A,0);
+
+    min_heapify(A,G,0);
     return minimo;
 }
 
@@ -141,26 +146,24 @@ void dijkstra(int dim, int *matp[dim], struct nodo *A, struct nodo *G){
     //gestisco nodo 0
     G->dist=0;
     G->prev=-1;     //S.PREV = NIL
-    min_heap_insert(A,G); //inserisco nodo 0 nel MIN_HEAP (G = primo elemento del grafo)
+    min_heap_insert(A,G,G); //inserisco nodo 0 nel MIN_HEAP (G = primo elemento del grafo)
 
     for(i=1;i<dim;i++){     //inizializzo tutti i nodi
         (G+i)->dist=infinito;       //dist infinita
         (G+i)->prev=-1;             //predecessore NIL
-        min_heap_insert(A,(G+i));   //inserisco tutti i nodi nello heap
+        min_heap_insert(A,(G+i),G);   //inserisco tutti i nodi nello heap
     }
 
     while(heapsize>-1){   //DUBBIO SU QUESTA CONDIZOONE
-        u = heap_extract_min(A);  //estraggo nodo con dist minima
+        u = heap_extract_min(A,G);  //estraggo nodo con dist minima
         riga = u.nome;  //per l'n-esimo nodo trovo gli adiacenti nell'n-esima riga
-        int pos;
         for(i=0;i<dim;i++){
             if(i!=riga && *(matp[riga]+i)!=0){     //scorro gli adiacenti a U
                 //G+i = i-esimo nodo, cioè nodo v
                 if((G+i)->dist > u.dist + *(matp[riga]+i)){
                     (G+i)->dist = u.dist + *(matp[riga]+i);
                     (G+i)->prev = u.nome;
-                    pos = trovapos(A,dim,(G+i)->nome);    //potrebbe essere migliorabile
-                    heap_decrease_key(A,pos,(G+i));
+                    heap_decrease_key(A,(G+i)->posmheap,(G+i),G);
                 }
             }
         }
@@ -211,7 +214,6 @@ int main() {
                 printf("\n");
             }
             */
-
 
             //init min_heap e grafo:
             for (i = 0; i < d; i++) {
@@ -280,4 +282,5 @@ int main() {
             in=scanf("%s",s);
         }
     }
+    return 0;
 }
