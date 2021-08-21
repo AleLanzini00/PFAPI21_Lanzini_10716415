@@ -1,15 +1,16 @@
 /*NOTE
  * TUTTI I TEST OPEN PASSATI
+ * TEST PRIVATI PASSATI TRANNE IL 5 -> OUTPUT NON CORRETTO
  * percorso: /mnt/c/users/alessio/desktop/Api_project/PFapi/cmake-build-debug
  * prev è imutile?
  *  FORSE MEGLIO INIT Q IN DJIKSTRA E NON IN MAIN ->creava probelmi
  * rivedere infinito -> se messo a numero grande crea probelmi e sbaglia il risultato
  *          Valutare passaggio a unisgned int
- * rivedere se trovapos è necessario (consuma tempo) -> meglio di teta(n) non si puo fare
+ * NUMCIFRE: per assurdo, leggere per riga e poi usare trovapos è più veloce della singola lettura degli elementi
+ *
  * IDEE
  *      -classifica come max_heap per avere subito il massimo
- *      -numcifre? ->rivedere lettura input!
- *      -trovapos evitato. forse è un po ridondante passare il puntatore a grafo ogni volta, ma non dovrebbe occupare molto
+ *
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,7 +31,7 @@ struct Grafo{       //struct usata per la classifica
 };
 
 int numcifre(int n){        //conta le cifre lette
-    int cifre=1;            //vine fatto "circa 6 volte" per ogni valore -> PESANTE 6*d*d
+    int cifre=1;
     int potenza=1;
     while(1) {
         if (n/potenza < 10)
@@ -41,7 +42,6 @@ int numcifre(int n){        //conta le cifre lette
         }
     }
 }
-
 int trovamassimo(struct Grafo vet[],int dim){   //restituisce la posizione del massimo
     int maxp=0;
     int maxd=-1;
@@ -172,8 +172,10 @@ void dijkstra(int dim, int *matp[dim], struct nodo *A, struct nodo *G){
 
 
 int main() {
-    int d,k,in;                 //in per evitare warning su scanf
-    in=scanf("%d %d",&d,&k);   //leggo d e k
+    int d,k;                 //in per evitare warning su scanf
+    if(scanf("%d %d ",&d,&k)!=2){
+        printf("\nErorre scanf");
+    }   //leggo d e k
 
     struct nodo Q[d];       //min heap che conterrà i nodi, uso un vettore di struct
     struct nodo grafo[d];   //rappresenta il grafo inserito
@@ -182,25 +184,27 @@ int main() {
 
     int maxdim = (d*10)+(d-1); //2^32=4.294.967.295, quindi 10 cifre per arco, più d-1 virgole
     char s[maxdim];
+    char *res;
     struct Grafo classifica[k]; //la classifica è un vettore di struct
     int i,c,posiz,tot;
     int id=0;
     int maxdist=0; //inizializzo per warning
 
     //leggo un comando Topk o AggiungiGrafo
-    in=scanf("%s",s);
-    while(in!=EOF){
+    res=fgets(s,15,stdin);
+    while(res!=NULL){
         if(s[0]=='A') {     //AggiungiGrafo
 
             //leggo la matrice per righe
-            for(c=0;c<d;c++){
-                in=scanf("%s",s);
-                posiz=0;    //posiz tiene conto della posizone del carattere nella stringa
-                for(i=0;i<d;i++){
-                    matrice[c][i]=atoi(&s[posiz]);
-                    posiz=posiz+numcifre(matrice[c][i])+1;
+            for(i=0;i<d;i++){
+                if(fgets(s,maxdim+1,stdin)!=NULL) {     //leggo d righe
+                    posiz = 0;
+                    for (c = 0; c < d; c++) {
+                        matrice[i][c] = atoi(&s[posiz]);
+                        posiz = posiz + numcifre(matrice[i][c]) + 1;    //converto a int e riempio matrice
+                    }
+                    matpointer[i] = &matrice[i][0];   //inizializzo punt a matrice per ogni riga
                 }
-                matpointer[c] = &matrice[c][0];   //inizializzo punt a matrice per ogni riga
             }
             //STAMPO LA MATRICE PER VERIFICA
 /*
@@ -254,7 +258,7 @@ int main() {
 
             //nuovo input
             id++;
-            in=scanf("%s",s);
+            res=fgets(s,15,stdin);
         }
         if(s[0]=='T'){
             //stampa la classifica
@@ -279,7 +283,7 @@ int main() {
                 }
             }
             printf("\n");
-            in=scanf("%s",s);
+            res=fgets(s,15,stdin);
         }
     }
     return 0;
