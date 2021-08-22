@@ -1,6 +1,6 @@
 /*NOTE
- * TUTTI I TEST OPEN PASSATI
- * TEST PRIVATI PASSATI TRANNE IL 5 -> OUTPUT NON CORRETTO
+ * PASSA TUYTTI I TEST TRANNE IL 5 PRIVATO -> TROPPO TEMPO
+ *
  * percorso: /mnt/c/users/alessio/desktop/Api_project/PFapi/cmake-build-debug
  * prev è imutile?
  *  FORSE MEGLIO INIT Q IN DJIKSTRA E NON IN MAIN ->creava probelmi
@@ -14,12 +14,13 @@
 */
 #include <stdio.h>
 #include <stdlib.h>
-#define infinito 999999
+#define infinito 4294967295     //2^32 -1
+
 int heapsize;
 
 struct nodo{
     int nome;
-    int dist;
+    unsigned long int dist;
     int prev;
     int posmheap;
     //int* heapsizep;
@@ -27,10 +28,10 @@ struct nodo{
 
 struct Grafo{       //struct usata per la classifica
     int ID;
-    int distanza;
+    unsigned long int distanza;
 };
-
-int numcifre(int n){        //conta le cifre lette
+/*
+int numcifre(unsigned long int n){        //conta le cifre lette
     int cifre=1;
     int potenza=1;
     while(1) {
@@ -41,13 +42,13 @@ int numcifre(int n){        //conta le cifre lette
             potenza=potenza*10;
         }
     }
-}
+}*/
 int trovamassimo(struct Grafo vet[],int dim){   //restituisce la posizione del massimo
     int maxp=0;
-    int maxd=-1;
+    unsigned long int maxd=0;
     int i;
     for(i=0;i<dim;i++){
-        if(vet[i].distanza>maxd){
+        if(vet[i].distanza>=maxd){
             maxp=i;
             maxd=vet[i].distanza;
         }
@@ -136,7 +137,7 @@ struct nodo heap_extract_min(struct nodo *A, struct nodo *G){
     return minimo;
 }
 
-void dijkstra(int dim, int *matp[dim], struct nodo *A, struct nodo *G){
+void dijkstra(int dim, unsigned long int *matp[dim], struct nodo *A, struct nodo *G){
     //A: min heap , G:rappresentazione del grafo
     int i;
     int riga;
@@ -179,16 +180,18 @@ int main() {
 
     struct nodo Q[d];       //min heap che conterrà i nodi, uso un vettore di struct
     struct nodo grafo[d];   //rappresenta il grafo inserito
-    int matrice[d][d];      //matrice per salvare l'input
-    int* matpointer[d];
+    unsigned long int matrice[d][d];      //matrice per salvare l'input
+    unsigned long int* matpointer[d];
 
     int maxdim = (d*10)+(d-1); //2^32=4.294.967.295, quindi 10 cifre per arco, più d-1 virgole
     char s[maxdim];
     char *res;
     struct Grafo classifica[k]; //la classifica è un vettore di struct
-    int i,c,posiz,tot;
+    int i,c;
+    unsigned long int tot;
     int id=0;
     int maxdist=0; //inizializzo per warning
+    char* ptr;
 
     //leggo un comando Topk o AggiungiGrafo
     res=fgets(s,15,stdin);
@@ -198,10 +201,12 @@ int main() {
             //leggo la matrice per righe
             for(i=0;i<d;i++){
                 if(fgets(s,maxdim+1,stdin)!=NULL) {     //leggo d righe
-                    posiz = 0;
                     for (c = 0; c < d; c++) {
-                        matrice[i][c] = atoi(&s[posiz]);
-                        posiz = posiz + numcifre(matrice[i][c]) + 1;    //converto a int e riempio matrice
+                        if(c==0){
+                            matrice[i][c] = strtoul(s, &ptr, 10);
+                        }
+                        else
+                            matrice[i][c] = strtoul(ptr+1,&ptr,10);
                     }
                     matpointer[i] = &matrice[i][0];   //inizializzo punt a matrice per ogni riga
                 }
@@ -213,11 +218,11 @@ int main() {
             printf("Stampa di controllo\n");
             for(riga=0;riga<d;riga++){
                 for(col=0;col<d;col++){
-                    printf("\t%d",matrice[riga][col]);
+                    printf("\t%lu",matrice[riga][col]);
                 }
                 printf("\n");
             }
-            */
+*/
 
             //init min_heap e grafo:
             for (i = 0; i < d; i++) {
@@ -262,27 +267,26 @@ int main() {
         }
         if(s[0]=='T'){
             //stampa la classifica
-            if(id<k){
-                for(i=0;i<id;i++){
-                    if(i!=id-1) {
-                        printf("%d ", classifica[i].ID);
+            if(k!=0) {
+                if (id < k) {
+                    for (i = 0; i < id; i++) {
+                        if (i != id - 1) {
+                            printf("%d ", classifica[i].ID);
+                        } else {
+                            printf("%d", classifica[i].ID);
+                        }
                     }
-                    else{
-                        printf("%d", classifica[i].ID);
+                } else {
+                    for (i = 0; i < k; i++) {
+                        if (i != k - 1) {
+                            printf("%d ", classifica[i].ID);
+                        } else {
+                            printf("%d", classifica[i].ID);
+                        }
                     }
                 }
+                printf("\n");
             }
-            else {
-                for (i = 0; i < k; i++) {
-                    if(i!=k-1){
-                        printf("%d ", classifica[i].ID);
-                    }
-                    else {
-                        printf("%d", classifica[i].ID);
-                    }
-                }
-            }
-            printf("\n");
             res=fgets(s,15,stdin);
         }
     }
