@@ -1,16 +1,9 @@
 /*NOTE
- * PASSA TUYTTI I TEST TRANNE IL 5 PRIVATO
- *
- * percorso: /mnt/c/users/alessio/desktop/Api_project/PFapi/cmake-build-debug
- * prev è imutile?
- * FORSE MEGLIO INIT Q IN DJIKSTRA E NON IN MAIN ->creava probelmi
- * rivedere infinito -> se messo a numero grande crea probelmi e sbaglia il risultato
- *
- *
+Funziona con 30L
 */
 #include <stdio.h>
 #include <stdlib.h>
-#define infinito 999999     //2^32 -1
+#define infinito 4294967295     //2^32 -1 = 4294967295
 
 int heapsize;
 int heapsizeC = -1;
@@ -20,7 +13,6 @@ struct nodo{
     unsigned long int dist;
     int prev;
     int posmheap;
-    //int* heapsizep;
 };
 
 struct Grafo{       //struct usata per la classifica
@@ -70,7 +62,6 @@ void heap_decrease_key(struct nodo* A,int posiz,struct nodo* node,struct nodo* G
 
     while(posiz>0 && ((A+((posiz-1)/2))->dist) > ((A+posiz)->dist)){
         //scambia A[i] con A[padrei]
-
         node->posmheap = (posiz-1)/2;   //aggiorno la posizione nel minheap del nodo
         (G+((A+((posiz-1)/2))->nome))->posmheap = posiz;   //aggriono posiz vecchio padre
 
@@ -184,15 +175,6 @@ void max_heap_insert(struct Grafo* A, struct Grafo* grafo){   //inserimento "in 
 
 
 void heap_change_max(struct Grafo *A, struct Grafo *new){
-    /*max_heap_insert(A,new);
-    //sostituisco il massimo, da eliminare, con l'ultimo valore
-    *A = *(A+heapsizeC);
-    //diminuisco di 1 heapsize così da eliminare il duplicato
-    heapsizeC = heapsizeC - 1;
-    //riordino
-    max_heapify(A,0);
-    */
-
     //cambio valore al massimo
     *A = *new;
     //sistemo con heapify
@@ -239,26 +221,12 @@ int main() {
                     matpointer[i] = &matrice[i][0];   //inizializzo punt a matrice per ogni riga
                 }
             }
-            //STAMPO LA MATRICE PER VERIFICA
-/*
-            int riga=0;
-            int col=0;
-            printf("Stampa di controllo\n");
-            for(riga=0;riga<d;riga++){
-                for(col=0;col<d;col++){
-                    printf("\t%lu",matrice[riga][col]);
-                }
-                printf("\n");
-            }
-*/
 
             //init min_heap e grafo:
             for (i = 0; i < d; i++) {
-                //Q[i].heapsizep = &heapsize;   //in ogni nodo tengo un puntatore alla varaibile heapsize
                 grafo[i].nome = i;                //do il nome a ogni nodo
                 grafo[i].dist = 0;
                 grafo[i].prev = -1;
-                //grafo[i].heapsizep = &heapsize;
             }
             //uso l'algoritmo di Dijkstra
             dijkstra(d, matpointer, Q, grafo);
@@ -307,7 +275,6 @@ int main() {
                     else {
                         printf("%d", classifica[i].ID);
                     }
-                    //printf("Grafo %d, distanza %d\n", classifica[i].ID,classifica[i].distanza);
                 }
             }
             printf("\n");
