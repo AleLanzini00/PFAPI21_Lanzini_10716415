@@ -1,22 +1,19 @@
 /*NOTE
- * PASSA TUYTTI I TEST TRANNE IL 5 PRIVATO -> TROPPO TEMPO
+ * PASSA TUYTTI I TEST TRANNE IL 5 PRIVATO
  *
  * percorso: /mnt/c/users/alessio/desktop/Api_project/PFapi/cmake-build-debug
  * prev è imutile?
- *  FORSE MEGLIO INIT Q IN DJIKSTRA E NON IN MAIN ->creava probelmi
+ * FORSE MEGLIO INIT Q IN DJIKSTRA E NON IN MAIN ->creava probelmi
  * rivedere infinito -> se messo a numero grande crea probelmi e sbaglia il risultato
- *          Valutare passaggio a unisgned int
- * NUMCIFRE: per assurdo, leggere per riga e poi usare trovapos è più veloce della singola lettura degli elementi
  *
- * IDEE
- *      -classifica come max_heap per avere subito il massimo
  *
 */
 #include <stdio.h>
 #include <stdlib.h>
-#define infinito 4294967295     //2^32 -1
+#define infinito 999999     //2^32 -1
 
 int heapsize;
+int heapsizeC = -1;
 
 struct nodo{
     int nome;
@@ -30,31 +27,6 @@ struct Grafo{       //struct usata per la classifica
     int ID;
     unsigned long int distanza;
 };
-/*
-int numcifre(unsigned long int n){        //conta le cifre lette
-    int cifre=1;
-    int potenza=1;
-    while(1) {
-        if (n/potenza < 10)
-            return cifre;
-        else{
-            cifre++;
-            potenza=potenza*10;
-        }
-    }
-}*/
-int trovamassimo(struct Grafo vet[],int dim){   //restituisce la posizione del massimo
-    int maxp=0;
-    unsigned long int maxd=0;
-    int i;
-    for(i=0;i<dim;i++){
-        if(vet[i].distanza>=maxd){
-            maxp=i;
-            maxd=vet[i].distanza;
-        }
-    }
-    return maxp;
-}
 
 //GESTIONE MIN_HEAP
 
@@ -171,9 +143,66 @@ void dijkstra(int dim, unsigned long int *matp[dim], struct nodo *A, struct nodo
     }
 }
 
+//GESTIONE CLASSIFICA CON MAXHEAP
+
+void max_heapify(struct Grafo* A, int posiz){
+    int massimo;    //posizione del massimo
+    int l = (posiz*2)+1;
+    int r = (posiz*2)+2; //figli sx e dx
+    massimo = posiz;
+    if( l <= heapsizeC && (((A+l)->distanza) > (A+posiz)->distanza)){
+        massimo = l;
+    }
+    if( r <= heapsizeC && (((A+r)->distanza) > (A+massimo)->distanza)){
+        massimo = r;
+    }
+    if(massimo != posiz){
+        struct Grafo swap;
+        swap=*(A+posiz);
+        *(A+posiz)=*(A+massimo);
+        *(A+massimo)=swap;
+        max_heapify(A,massimo);
+    }
+}
+
+void max_heap_insert(struct Grafo* A, struct Grafo* grafo){   //inserimento "in coda" con riordino
+    //grafo: grafo da inserire
+    //inserisco in coda e "risalgo"
+    int posiz;
+    heapsizeC = heapsizeC + 1;
+    posiz = heapsizeC;
+    (A+posiz)->ID = grafo->ID;
+    (A+posiz)->distanza = grafo->distanza;
+    while(posiz>0 && (((A+((posiz-1)/2))->distanza) < ((A+posiz)->distanza))){    //se il padre  è minore del figlio scambio
+        struct Grafo swap;
+        swap = *(A+((posiz-1)/2));
+        *(A+((posiz-1)/2)) = *(A+posiz);
+        *(A+posiz) = swap;
+        posiz = (posiz-1)/2;
+    }
+}
+
+
+void heap_change_max(struct Grafo *A, struct Grafo *new){
+    /*max_heap_insert(A,new);
+    //sostituisco il massimo, da eliminare, con l'ultimo valore
+    *A = *(A+heapsizeC);
+    //diminuisco di 1 heapsize così da eliminare il duplicato
+    heapsizeC = heapsizeC - 1;
+    //riordino
+    max_heapify(A,0);
+    */
+
+    //cambio valore al massimo
+    *A = *new;
+    //sistemo con heapify
+    max_heapify(A,0);
+}
+
+
 
 int main() {
-    int d,k;                 //in per evitare warning su scanf
+    int d,k;
     if(scanf("%d %d ",&d,&k)!=2){
         printf("\nErorre scanf");
     }   //leggo d e k
@@ -187,10 +216,9 @@ int main() {
     char s[maxdim];
     char *res;
     struct Grafo classifica[k]; //la classifica è un vettore di struct
+    struct Grafo letto;
     int i,c;
-    unsigned long int tot;
     int id=0;
-    int maxdist=0; //inizializzo per warning
     char* ptr;
 
     //leggo un comando Topk o AggiungiGrafo
@@ -228,65 +256,61 @@ int main() {
             for (i = 0; i < d; i++) {
                 //Q[i].heapsizep = &heapsize;   //in ogni nodo tengo un puntatore alla varaibile heapsize
                 grafo[i].nome = i;                //do il nome a ogni nodo
-                grafo[i].dist = -1;
+                grafo[i].dist = 0;
                 grafo[i].prev = -1;
                 //grafo[i].heapsizep = &heapsize;
             }
             //uso l'algoritmo di Dijkstra
             dijkstra(d, matpointer, Q, grafo);
-            //stampa di prova
-            tot = 0;  //somma delle distanze
+
+            letto.ID=id;
+            letto.distanza = 0;  //somma delle distanze
             for (i = 0; i < d; i++) {
                 if (grafo[i].dist == infinito) {
                     grafo[i].dist = 0;    //gestisce nodi non collegati
                 }
-                //printf("\nDistanza nodo %d: %d", i, grafo[i].dist);
-                tot = tot + grafo[i].dist;
+                letto.distanza = letto.distanza + grafo[i].dist;
             }
+
 
             //GESTIONE CLASSIFICA
             if(id<k){   //inizializzo la classifica con i primi K grafi
-                classifica[id].ID=id;
-                classifica[id].distanza=tot;
-                if(id==k-1){
-                    maxdist=trovamassimo(classifica,k); //calcolo il massimo solo una volta riempito il vettore, prima inserisco sempre
-                }
+                max_heap_insert(classifica,&letto);
             }
             else{
-                if(tot<classifica[maxdist].distanza){
-                    //sostituisco il maxid
-                    classifica[maxdist].ID=id;
-                    classifica[maxdist].distanza=tot;
-                    maxdist=trovamassimo(classifica,k); //ricalcolo il peggiore
+                if(classifica[0].distanza > letto.distanza){
+                    heap_change_max(classifica, &letto);
                 }
             }
-
             //nuovo input
             id++;
             res=fgets(s,15,stdin);
         }
+
         if(s[0]=='T'){
             //stampa la classifica
-            if(k!=0) {
-                if (id < k) {
-                    for (i = 0; i < id; i++) {
-                        if (i != id - 1) {
-                            printf("%d ", classifica[i].ID);
-                        } else {
-                            printf("%d", classifica[i].ID);
-                        }
+            if(id<k){
+                for(i=0;i<id;i++){
+                    if(i!=id-1) {
+                        printf("%d ", classifica[i].ID);
                     }
-                } else {
-                    for (i = 0; i < k; i++) {
-                        if (i != k - 1) {
-                            printf("%d ", classifica[i].ID);
-                        } else {
-                            printf("%d", classifica[i].ID);
-                        }
+                    else{
+                        printf("%d", classifica[i].ID);
                     }
                 }
-                printf("\n");
             }
+            else {
+                for (i = 0; i < k; i++) {
+                    if(i!=k-1){
+                        printf("%d ", classifica[i].ID);
+                    }
+                    else {
+                        printf("%d", classifica[i].ID);
+                    }
+                    //printf("Grafo %d, distanza %d\n", classifica[i].ID,classifica[i].distanza);
+                }
+            }
+            printf("\n");
             res=fgets(s,15,stdin);
         }
     }
